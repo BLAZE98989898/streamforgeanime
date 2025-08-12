@@ -4,9 +4,11 @@ import DailymotionPlayer from "@/components/player/DailymotionPlayer";
 import YouTubePlayer from "@/components/player/YouTubePlayer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const SeriesDetail = () => {
   const { id } = useParams();
+  const { toast } = useToast();
 
   const { data: series, refetch } = useQuery({
     queryKey: ["series", id],
@@ -39,13 +41,69 @@ const SeriesDetail = () => {
 
   const [provider, setProvider] = useState<"dailymotion" | "youtube">("dailymotion");
   const [currentId, setCurrentId] = useState<string | undefined>(undefined);
+  const [isWatching, setIsWatching] = useState(false);
+  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const [totalViewsAdded, setTotalViewsAdded] = useState(0);
 
   useEffect(() => {
     if (!id) return;
-    // Increment view count (fire-and-forget)
-    supabase.rpc("increment_series_view", { p_series_id: id }).then(() => refetch());
+    // Initial view count increment when page loads
+    supabase.rpc("increment_series_view", { p_series_id: id }).then(() => {
+      refetch();
+      setTotalViewsAdded(1);
+    });
   }, [id, refetch]);
 
+  // Time-based view counting system
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isWatching && id) {
+      interval = setInterval(async () => {
+        try {
+          await supabase.rpc("increment_series_view", { p_series_id: id });
+          setTotalViewsAdded(prev => prev + 1);
+          refetch();
+        } catch (error) {
+          console.error("Failed to increment view:", error);
+        }
+      }, 5000); // Increment every 5 seconds
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isWatching, id, refetch]);
+
+  // Handle player events to track watching state
+  const handlePlayerStart = () => {
+    setIsWatching(true);
+    setWatchStartTime(Date.now());
+  };
+
+  const handlePlayerPause = () => {
+    setIsWatching(false);
+  };
+
+  const handlePlayerEnd = () => {
+    setIsWatching(false);
+    if (watchStartTime) {
+      const watchDuration = Math.floor((Date.now() - watchStartTime) / 1000);
+      toast({
+        title: "Thanks for watching!",
+        description: `You watched for ${Math.floor(watchDuration / 60)}m ${watchDuration % 60}s and contributed ${totalViewsAdded} views`,
+      });
+    }
+  };
+
+  // Reset watching state when changing videos
+  useEffect(() => {
+    setIsWatching(false);
+    setWatchStartTime(null);
+    setTotalViewsAdded(1); // Reset to initial view
+  }, [currentId, provider]);
   useEffect(() => {
     if (series?.dailymotion_playlist_id) {
       setProvider("dailymotion");
@@ -78,23 +136,39 @@ const SeriesDetail = () => {
           <span>{series?.views_count ?? 0} views</span>
           <span className="mx-2">•</span>
           <span>{ratingAvg} ★</span>
+          {isWatching && (
+            <>
+              <span className="mx-2">•</span>
+              <span className="text-green-600">● Watching (+{totalViewsAdded} views)</span>
+            </>
+          )}
         </div>
         {series?.description && (
           <p className="mt-2 text-muted-foreground">{series.description}</p>
         )}
       </header>
 
+      <div className="mb-4 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+        <p>📊 <strong>View System:</strong> Views increment every 5 seconds while watching. A 30-minute watch session = ~360 views!</p>
+      </div>
+
       {provider === "dailymotion" ? (
         <DailymotionPlayer
           title={series?.title || "Series Player"}
           playlistId={series?.dailymotion_playlist_id || undefined}
           videoId={series?.dailymotion_playlist_id ? undefined : currentId}
+          onPlay={handlePlayerStart}
+          onPause={handlePlayerPause}
+          onEnded={handlePlayerEnd}
         />
       ) : (
         <YouTubePlayer
           title={series?.title || "Series Player"}
           playlistId={series?.youtube_playlist_id || undefined}
           videoId={series?.youtube_playlist_id ? undefined : currentId}
+          onPlay={handlePlayerStart}
+          onPause={handlePlayerPause}
+          onEnded={handlePlayerEnd}
         />
       )}
 

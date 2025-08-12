@@ -115,7 +115,7 @@ const Index = () => {
             return (
               <Link key={s.id} to={`/series/${s.id}`} className="group">
                 <Card className="overflow-hidden">
-                  <div className="relative aspect-[9/16] w-full overflow-hidden">
+                  <div className="relative aspect-[3/4] w-full overflow-hidden">
                     <img
                       src={s.cover_image_url || "/placeholder.svg"}
                       alt={`${s.title} cover image`}

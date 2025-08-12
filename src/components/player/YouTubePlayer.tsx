@@ -6,9 +6,43 @@ interface YouTubePlayerProps {
   playlistId?: string;
   title?: string;
   className?: string;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onEnded?: () => void;
 }
 
-const YouTubePlayer = ({ videoId, playlistId, title = "YouTube Player", className }: YouTubePlayerProps) => {
+const YouTubePlayer = ({ videoId, playlistId, title = "YouTube Player", className, onPlay, onPause, onEnded }: YouTubePlayerProps) => {
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.youtube.com') return;
+      
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        if (data.event === 'video-progress') {
+          switch (data.info?.playerState) {
+            case 1: // Playing
+              onPlay?.();
+              break;
+            case 2: // Paused
+              onPause?.();
+              break;
+            case 0: // Ended
+              onEnded?.();
+              break;
+          }
+        }
+      } catch (error) {
+        // Ignore parsing errors
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onPlay, onPause, onEnded]);
+
   const normalizeVideoId = (input?: string) => {
     if (!input) return undefined;
     const url = new URL(input, window.location.origin);
@@ -40,13 +74,14 @@ const YouTubePlayer = ({ videoId, playlistId, title = "YouTube Player", classNam
   const effectiveVideoId = normalizeVideoId(videoId);
   const effectivePlaylistId = normalizePlaylistId(playlistId);
   const src = effectivePlaylistId
-    ? `https://www.youtube.com/embed/videoseries?list=${effectivePlaylistId}`
-    : `https://www.youtube.com/embed/${effectiveVideoId}`;
+    ? `https://www.youtube.com/embed/videoseries?list=${effectivePlaylistId}&enablejsapi=1&origin=${window.location.origin}`
+    : `https://www.youtube.com/embed/${effectiveVideoId}?enablejsapi=1&origin=${window.location.origin}`;
 
   return (
     <div className={cn("mx-auto w-full max-w-[420px] sm:max-w-[520px] md:max-w-[720px] lg:max-w-[960px]", className)}>
       <AspectRatio ratio={16 / 9}>
         <iframe
+          ref={iframeRef}
           loading="lazy"
           src={src}
           title={title}
