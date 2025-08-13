@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -35,7 +36,7 @@ const CommentForm = ({
   const [showForm, setShowForm] = useState(!compact);
 
   // Load saved user info from localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     const savedName = localStorage.getItem("comment_author_name");
     const savedEmail = localStorage.getItem("comment_author_email");
     if (savedName) setAuthorName(savedName);
