@@ -5,6 +5,8 @@ import YouTubePlayer from "@/components/player/YouTubePlayer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import CommentsList from "@/components/comments/CommentsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SeriesDetail = () => {
   const { id } = useParams();
@@ -44,6 +46,7 @@ const SeriesDetail = () => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [totalViewsAdded, setTotalViewsAdded] = useState(0);
+  const [selectedEpisodeForComments, setSelectedEpisodeForComments] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -172,42 +175,82 @@ const SeriesDetail = () => {
         />
       )}
 
-      {episodes && episodes.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
-          <ul className="grid gap-2">
-            {episodes.map((ep) => (
-              <li
-                key={ep.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  if (ep.dailymotion_video_id) {
-                    setProvider("dailymotion");
-                    setCurrentId(ep.dailymotion_video_id);
-                  } else if (ep.youtube_video_id) {
-                    setProvider("youtube");
-                    setCurrentId(ep.youtube_video_id);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (ep.dailymotion_video_id) {
-                      setProvider("dailymotion");
-                      setCurrentId(ep.dailymotion_video_id);
-                    } else if (ep.youtube_video_id) {
-                      setProvider("youtube");
-                      setCurrentId(ep.youtube_video_id);
-                    }
-                  }
-                }}
-                className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentId && ((provider === 'dailymotion' && currentId === ep.dailymotion_video_id) || (provider === 'youtube' && currentId === ep.youtube_video_id)) ? "border-primary" : ""}`}
-              >
-                <span className="font-medium">{ep.title}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      <div className="mt-8">
+        <Tabs defaultValue="episodes" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="episodes">Episodes</TabsTrigger>
+            <TabsTrigger value="comments">Comments</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="episodes" className="mt-6">
+            {episodes && episodes.length > 0 ? (
+              <section>
+                <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
+                <ul className="grid gap-2">
+                  {episodes.map((ep) => (
+                    <li
+                      key={ep.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (ep.dailymotion_video_id) {
+                          setProvider("dailymotion");
+                          setCurrentId(ep.dailymotion_video_id);
+                        } else if (ep.youtube_video_id) {
+                          setProvider("youtube");
+                          setCurrentId(ep.youtube_video_id);
+                        }
+                        setSelectedEpisodeForComments(ep.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (ep.dailymotion_video_id) {
+                            setProvider("dailymotion");
+                            setCurrentId(ep.dailymotion_video_id);
+                          } else if (ep.youtube_video_id) {
+                            setProvider("youtube");
+                            setCurrentId(ep.youtube_video_id);
+                          }
+                          setSelectedEpisodeForComments(ep.id);
+                        }
+                      }}
+                      className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentId && ((provider === 'dailymotion' && currentId === ep.dailymotion_video_id) || (provider === 'youtube' && currentId === ep.youtube_video_id)) ? "border-primary" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{ep.title}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEpisodeForComments(ep.id);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
+                        >
+                          Comments
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                <p>No episodes available</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="comments" className="mt-6">
+            <CommentsList
+              seriesId={id!}
+              episodeId={selectedEpisodeForComments}
+              title={selectedEpisodeForComments ? 
+                `Comments for ${episodes?.find(ep => ep.id === selectedEpisodeForComments)?.title}` : 
+                `Comments for ${series?.title}`
+              }
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
       )}
     </main>
   );

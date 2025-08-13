@@ -7,6 +7,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import { MessageCircle } from "lucide-react";
+
 const Index = () => {
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
@@ -18,7 +20,7 @@ const Index = () => {
       const pattern = q ? `%${q}%` : "";
       let qb = (supabase as any)
         .from("series")
-        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count,status")
+        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count,status,comment_count:comments(count)")
         .order("created_at", { ascending: false });
       if (cat !== "all") {
         qb = qb.eq("category", cat);
@@ -127,6 +129,13 @@ const Index = () => {
                     </div>
                     <div className={`absolute right-2 top-2 status-badge ${((s as any).status === 'completed') ? 'status-badge--completed' : 'status-badge--ongoing'}`}>
                       {(s as any).status ? `${String((s as any).status).charAt(0).toUpperCase()}${String((s as any).status).slice(1)}` : ""}
+                    </div>
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
+                      <MessageCircle className="mr-1 h-3 w-3" />
+                      {Array.isArray((s as any).comment_count) 
+                        ? (s as any).comment_count.length 
+                        : (s as any).comment_count || 0
+                      }
                     </div>
                     <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
                       <Star className="mr-1 h-3 w-3 fill-yellow-500 text-yellow-500" /> {avg}
