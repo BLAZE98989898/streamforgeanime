@@ -5,6 +5,7 @@ import YouTubePlayer from "@/components/player/YouTubePlayer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SeriesDetail = () => {
   const { id } = useParams();
@@ -104,6 +105,7 @@ const SeriesDetail = () => {
     setWatchStartTime(null);
     setTotalViewsAdded(1); // Reset to initial view
   }, [currentId, provider]);
+  
   useEffect(() => {
     if (series?.dailymotion_playlist_id) {
       setProvider("dailymotion");
@@ -223,7 +225,8 @@ const SeriesDetail = () => {
                 <p>No episodes available</p>
               </div>
             )}
-          </section>
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
