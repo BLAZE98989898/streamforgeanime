@@ -5,8 +5,6 @@ import YouTubePlayer from "@/components/player/YouTubePlayer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import CommentsList from "@/components/comments/CommentsList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SeriesDetail = () => {
   const { id } = useParams();
@@ -46,7 +44,6 @@ const SeriesDetail = () => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [totalViewsAdded, setTotalViewsAdded] = useState(0);
-  const [selectedEpisodeForComments, setSelectedEpisodeForComments] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -200,7 +197,6 @@ const SeriesDetail = () => {
                           setProvider("youtube");
                           setCurrentId(ep.youtube_video_id);
                         }
-                        setSelectedEpisodeForComments(ep.id);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -211,22 +207,12 @@ const SeriesDetail = () => {
                             setProvider("youtube");
                             setCurrentId(ep.youtube_video_id);
                           }
-                          setSelectedEpisodeForComments(ep.id);
                         }
                       }}
                       className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentId && ((provider === 'dailymotion' && currentId === ep.dailymotion_video_id) || (provider === 'youtube' && currentId === ep.youtube_video_id)) ? "border-primary" : ""}`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{ep.title}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedEpisodeForComments(ep.id);
-                          }}
-                          className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
-                        >
-                          Comments
-                        </button>
                       </div>
                     </li>
                   ))}
@@ -237,19 +223,7 @@ const SeriesDetail = () => {
                 <p>No episodes available</p>
               </div>
             )}
-          </TabsContent>
-          
-          <TabsContent value="comments" className="mt-6">
-            <CommentsList
-              seriesId={id!}
-              episodeId={selectedEpisodeForComments}
-              title={selectedEpisodeForComments ? 
-                `Comments for ${episodes?.find(ep => ep.id === selectedEpisodeForComments)?.title}` : 
-                `Comments for ${series?.title}`
-              }
-            />
-          </TabsContent>
-        </Tabs>
+          </section>
       </div>
     </main>
   );

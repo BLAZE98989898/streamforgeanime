@@ -7,26 +7,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { MessageCircle } from "lucide-react";
 
 const Index = () => {
   const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<"all" | "donghua" | "anime" | "movie" | "cartoon">("all");
-  const [status, setStatus] = useState<"all" | "ongoing" | "completed">("all");
   const { data: series, isLoading, error } = useQuery({
     queryKey: ["series", q, cat, status],
     queryFn: async () => {
       const pattern = q ? `%${q}%` : "";
       let qb = (supabase as any)
         .from("series")
-        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count,status,comment_count:comments(count)")
+        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count")
         .order("created_at", { ascending: false });
       if (cat !== "all") {
         qb = qb.eq("category", cat);
-      }
-      if (status !== "all") {
-        qb = qb.eq("status", status);
       }
       if (q && q.trim().length > 0) {
         qb = qb.or(`title.ilike.${pattern},description.ilike.${pattern}`);
@@ -36,22 +31,6 @@ const Index = () => {
       return data ?? [];
     },
   });
-  useEffect(() => {
-    const channel = supabase
-      .channel("series-changes")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "series" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["series"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   return (
     <main>
@@ -103,13 +82,6 @@ const Index = () => {
               <TabsTrigger value="cartoon">Cartoon</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Tabs value={status} onValueChange={(v) => setStatus(v as any)} className="mt-2">
-            <TabsList className="grid w-full grid-cols-3 sm:w-auto">
-              <TabsTrigger value="all">All Status</TabsTrigger>
-              <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </header>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {series?.map((s) => {
@@ -126,16 +98,6 @@ const Index = () => {
                     />
                     <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
                       <Eye className="mr-1 h-3 w-3" /> {s.views_count ?? 0}
-                    </div>
-                    <div className={`absolute right-2 top-2 status-badge ${((s as any).status === 'completed') ? 'status-badge--completed' : 'status-badge--ongoing'}`}>
-                      {(s as any).status ? `${String((s as any).status).charAt(0).toUpperCase()}${String((s as any).status).slice(1)}` : ""}
-                    </div>
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
-                      <MessageCircle className="mr-1 h-3 w-3" />
-                      {Array.isArray((s as any).comment_count) 
-                        ? (s as any).comment_count.length 
-                        : (s as any).comment_count || 0
-                      }
                     </div>
                     <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
                       <Star className="mr-1 h-3 w-3 fill-yellow-500 text-yellow-500" /> {avg}
