@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Star } from "lucide-react";
+import { Eye, Star, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const Index = () => {
@@ -18,7 +18,7 @@ const Index = () => {
       const pattern = q ? `%${q}%` : "";
       let qb = (supabase as any)
         .from("series")
-        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count")
+        .select("id,title,description,cover_image_url,dailymotion_playlist_id,created_at,views_count,rating_sum,rating_count,comment_count:comments(count)")
         .order("created_at", { ascending: false });
       if (cat !== "all") {
         qb = qb.eq("category", cat);
@@ -86,6 +86,7 @@ const Index = () => {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {series?.map((s) => {
             const avg = s.rating_count > 0 ? (s.rating_sum / s.rating_count).toFixed(1) : "0.0";
+            const commentCount = Array.isArray(s.comment_count) ? s.comment_count.length : 0;
             return (
               <Link key={s.id} to={`/series/${s.id}`} className="group">
                 <Card className="overflow-hidden">
@@ -102,6 +103,11 @@ const Index = () => {
                     <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
                       <Star className="mr-1 h-3 w-3 fill-yellow-500 text-yellow-500" /> {avg}
                     </div>
+                    {commentCount > 0 && (
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-background/80 px-2 py-1 text-xs text-foreground backdrop-blur">
+                        <MessageCircle className="mr-1 h-3 w-3" /> {commentCount}
+                      </div>
+                    )}
                   </div>
                   <CardHeader className="p-3">
                     <CardTitle className="line-clamp-1 text-base">{s.title}</CardTitle>

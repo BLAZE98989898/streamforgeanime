@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import DailymotionPlayer from "@/components/player/DailymotionPlayer";
 import YouTubePlayer from "@/components/player/YouTubePlayer";
+import CommentsList from "@/components/comments/CommentsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +47,7 @@ const SeriesDetail = () => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [totalViewsAdded, setTotalViewsAdded] = useState(0);
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!id) return;
@@ -177,6 +180,13 @@ const SeriesDetail = () => {
       <div className="mt-8">
         {episodes && episodes.length > 0 ? (
           <section>
+            <Tabs defaultValue="episodes" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="episodes">Episodes</TabsTrigger>
+                <TabsTrigger value="comments">Comments</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="episodes" className="mt-6">
             <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
             <ul className="grid gap-2">
               {episodes.map((ep) => (
@@ -188,9 +198,11 @@ const SeriesDetail = () => {
                     if (ep.dailymotion_video_id) {
                       setProvider("dailymotion");
                       setCurrentId(ep.dailymotion_video_id);
+                      setSelectedEpisodeId(ep.id);
                     } else if (ep.youtube_video_id) {
                       setProvider("youtube");
                       setCurrentId(ep.youtube_video_id);
+                      setSelectedEpisodeId(ep.id);
                     }
                   }}
                   onKeyDown={(e) => {
@@ -198,9 +210,11 @@ const SeriesDetail = () => {
                       if (ep.dailymotion_video_id) {
                         setProvider("dailymotion");
                         setCurrentId(ep.dailymotion_video_id);
+                        setSelectedEpisodeId(ep.id);
                       } else if (ep.youtube_video_id) {
                         setProvider("youtube");
                         setCurrentId(ep.youtube_video_id);
+                        setSelectedEpisodeId(ep.id);
                       }
                     }
                   }}
@@ -212,6 +226,16 @@ const SeriesDetail = () => {
                 </li>
               ))}
             </ul>
+              </TabsContent>
+              
+              <TabsContent value="comments" className="mt-6">
+                <CommentsList
+                  seriesId={id!}
+                  episodeId={selectedEpisodeId}
+                  title={selectedEpisodeId ? "Episode Comments" : "Series Comments"}
+                />
+              </TabsContent>
+            </Tabs>
           </section>
         ) : (
           <div className="text-center text-muted-foreground py-8">
