@@ -1,4 +1,4 @@
-import React from "react";
+import { useRef, useEffect } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,9 @@ interface YouTubePlayerProps {
 }
 
 const YouTubePlayer = ({ videoId, playlistId, title = "YouTube Player", className, onPlay, onPause, onEnded }: YouTubePlayerProps) => {
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== 'https://www.youtube.com') return;
       
