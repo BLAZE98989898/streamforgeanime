@@ -175,58 +175,49 @@ const SeriesDetail = () => {
       )}
 
       <div className="mt-8">
-        <Tabs defaultValue="episodes" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="episodes">Episodes</TabsTrigger>
-            <TabsTrigger value="comments">Comments</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="episodes" className="mt-6">
-            {episodes && episodes.length > 0 ? (
-              <section>
-                <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
-                <ul className="grid gap-2">
-                  {episodes.map((ep) => (
-                    <li
-                      key={ep.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        if (ep.dailymotion_video_id) {
-                          setProvider("dailymotion");
-                          setCurrentId(ep.dailymotion_video_id);
-                        } else if (ep.youtube_video_id) {
-                          setProvider("youtube");
-                          setCurrentId(ep.youtube_video_id);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          if (ep.dailymotion_video_id) {
-                            setProvider("dailymotion");
-                            setCurrentId(ep.dailymotion_video_id);
-                          } else if (ep.youtube_video_id) {
-                            setProvider("youtube");
-                            setCurrentId(ep.youtube_video_id);
-                          }
-                        }
-                      }}
-                      className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentId && ((provider === 'dailymotion' && currentId === ep.dailymotion_video_id) || (provider === 'youtube' && currentId === ep.youtube_video_id)) ? "border-primary" : ""}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{ep.title}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                <p>No episodes available</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+        {episodes && episodes.length > 0 ? (
+          <section>
+            <h2 className="mb-3 text-xl font-semibold">Episodes</h2>
+            <ul className="grid gap-2">
+              {episodes.map((ep) => (
+                <li
+                  key={ep.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    if (ep.dailymotion_video_id) {
+                      setProvider("dailymotion");
+                      setCurrentId(ep.dailymotion_video_id);
+                    } else if (ep.youtube_video_id) {
+                      setProvider("youtube");
+                      setCurrentId(ep.youtube_video_id);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (ep.dailymotion_video_id) {
+                        setProvider("dailymotion");
+                        setCurrentId(ep.dailymotion_video_id);
+                      } else if (ep.youtube_video_id) {
+                        setProvider("youtube");
+                        setCurrentId(ep.youtube_video_id);
+                      }
+                    }
+                  }}
+                  className={`rounded-md border p-3 transition-colors hover:bg-accent ${currentId && ((provider === 'dailymotion' && currentId === ep.dailymotion_video_id) || (provider === 'youtube' && currentId === ep.youtube_video_id)) ? "border-primary" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{ep.title}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            <p>No episodes available</p>
+          </div>
+        )}
       </div>
     </main>
   );
