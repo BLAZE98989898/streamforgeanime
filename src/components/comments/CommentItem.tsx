@@ -39,7 +39,7 @@ const CommentItem = ({ comment, onCommentUpdate, showReplies = true, isReply = f
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(comment.likes_count);
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [showReplies, setShowRepliesState] = useState(false);
+  const [repliesVisible, setRepliesVisible] = useState(false);
   const [replies, setReplies] = useState<Comment[]>([]);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [userIdentifier, setUserIdentifier] = useState<string>("");
@@ -120,10 +120,10 @@ const CommentItem = ({ comment, onCommentUpdate, showReplies = true, isReply = f
   };
 
   const handleShowReplies = () => {
-    if (!showReplies) {
+    if (!repliesVisible) {
       loadReplies();
     }
-    setShowRepliesState(!showReplies);
+    setRepliesVisible(!repliesVisible);
   };
 
   const handleReplyAdded = () => {
@@ -229,7 +229,7 @@ const CommentItem = ({ comment, onCommentUpdate, showReplies = true, isReply = f
                   className="h-7 px-2 text-muted-foreground"
                   disabled={isLoadingReplies}
                 >
-                  {isLoadingReplies ? "Loading..." : showReplies ? "Hide replies" : `Show ${comment.reply_count} ${comment.reply_count === 1 ? "reply" : "replies"}`}
+                  {isLoadingReplies ? "Loading..." : repliesVisible ? "Hide replies" : `Show ${comment.reply_count} ${comment.reply_count === 1 ? "reply" : "replies"}`}
                 </Button>
               )}
             </div>
@@ -250,7 +250,7 @@ const CommentItem = ({ comment, onCommentUpdate, showReplies = true, isReply = f
             )}
 
             {/* Replies */}
-            {showReplies && replies.length > 0 && (
+            {repliesVisible && replies.length > 0 && (
               <div className="mt-4 space-y-3">
                 {replies.map((reply) => (
                   <CommentItem
